@@ -1,0 +1,51 @@
+# robots.txt for WyaparPay - Digital Payment Platform
+# Optimized for Indian fintech market
+
+User-agent: *
+Allow: /
+
+# Disallow admin and private areas
+Disallow: /dashboard/
+Disallow: /profile/
+Disallow: /transactions/
+Disallow: /api/
+Disallow: /_next/
+Disallow: /test/
+
+# Allow important pages for SEO
+Allow: /
+Allow: /about-us
+Allow: /services/
+Allow: /help-center
+Allow: /contact-us
+Allow: /faqs
+Allow: /blog
+Allow: /careers
+Allow: /press
+
+# Sitemap location
+Sitemap: https://www.wyaparpay.com/sitemap.xml
+
+# Crawl delay (optional, helps with server load)
+Crawl-delay: 1
+
+# Specific rules for major search engines
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: Yandex
+Allow: /
+
+# Block bad bots
+User-agent: AhrefsBot
+Crawl-delay: 10
+
+User-agent: SemrushBot
+Crawl-delay: 10
+
+User-agent: MJ12bot
+Disallow: /
+

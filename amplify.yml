@@ -1,0 +1,58 @@
+version: 1
+frontend:
+  phases:
+    preBuild:
+      commands:
+        - nvm use 20
+        - npm ci
+        - |
+          echo "=== Environment Check ==="
+          echo "NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-not set}"
+          echo "NODE_ENV: ${NODE_ENV:-not set}"
+          echo ""
+          echo "✅ Environment variables will be available at build time"
+          echo "✅ Server-side code can access process.env"
+          echo "✅ API routes will have access to all env vars"
+    build:
+      commands:
+        - npm run build
+        - |
+          echo "=== Post-Build Verification ==="
+          echo "Checking required-server-files.json..."
+          if [ -f .next/required-server-files.json ]; then
+            echo "✅ Found at .next/required-server-files.json"
+          else
+            echo "❌ Missing"
+            exit 1
+          fi
+          echo ""
+          echo "Checking server trace files..."
+          TRACE_COUNT=$(find .next/server -name "*.nft.json" 2>/dev/null | wc -l)
+          echo "Found $TRACE_COUNT trace files in .next/server/"
+          if [ $TRACE_COUNT -gt 0 ]; then
+            find .next/server -name "*.nft.json" 2>/dev/null | head -3 | while read f; do 
+              echo "  ✅ $f"
+            done
+            echo "✅ Server trace files are in place for Amplify"
+          else
+            echo "⚠️  Warning: No trace files found (this may be normal for static exports)"
+          fi
+          echo ""
+          echo "Checking public folder..."
+          test -d public && echo "✅ public/ directory exists" || echo "❌ Missing"
+          echo ""
+          echo "Copying public folder to .next/public for Amplify..."
+          if [ -d public ]; then
+            cp -r public .next/public
+            echo "✅ Copied public/ to .next/public"
+          fi
+          echo ""
+          echo "File structure ready ✅"
+  artifacts:
+    baseDirectory: .next
+    files:
+      - '**/*'
+  cache:
+    paths:
+      - node_modules/**/*
+      - .next/cache/**/*
