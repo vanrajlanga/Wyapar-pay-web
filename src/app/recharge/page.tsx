@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRecharge } from '@/contexts/RechargeContext';
 import { Button, Input, Card } from '@/components/ui';
 import { ROUTES } from '@/constants';
+import { OPERATORS, getOperatorByCode } from '@/constants/operators';
 import { rechargeService } from '@/services/recharge.service';
 import { logger } from '@/utils/logger';
 import { MdPhone, MdArrowBack } from 'react-icons/md';
@@ -26,9 +27,18 @@ export default function RechargePage() {
   const [mobile, setMobile] = useState('');
   const [operators, setOperators] = useState<RechargeOperator[]>([]);
   const [selectedOp, setSelectedOp] = useState<string>('');
-  const [detectedCircle, setDetectedCircle] = useState<string>('');
+  const [detectedOperator, setDetectedOperator] = useState<{
+    code: string;
+    name: string;
+    operatorId: string;
+    circleCode: string;
+    circleName: string;
+  } | null>(null);
+  const [circles, setCircles] = useState<Array<{ circleCode: string; circleName: string }>>([]);
+  const [selectedCircleCode, setSelectedCircleCode] = useState<string>('');
   const [rechargeAmount, setRechargeAmount] = useState('');
   const [loading, setLoading] = useState(false);
+  const [loadingCircles, setLoadingCircles] = useState(false);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
@@ -39,6 +49,7 @@ export default function RechargePage() {
     }
 
     loadOperators();
+    loadCircles();
   }, [isAuthenticated, router]);
 
   const loadOperators = async () => {
@@ -47,6 +58,18 @@ export default function RechargePage() {
       setOperators(ops);
     } catch (error) {
       logger.error('Failed to load operators', error);
+    }
+  };
+
+  const loadCircles = async () => {
+    try {
+      setLoadingCircles(true);
+      const circlesData = await rechargeService.getAllCircles();
+      setCircles(circlesData);
+    } catch (error) {
+      logger.error('Failed to load circles', error);
+    } finally {
+      setLoadingCircles(false);
     }
   };
 
@@ -73,9 +96,18 @@ export default function RechargePage() {
         circleName: result.circleName,
       });
 
-      // Set operator code from KWIKAPI response
+      // Store detected operator info and auto-select it
+      setDetectedOperator({
+        code: result.operatorCode,
+        name: result.operatorName,
+        operatorId: result.operatorId || '',
+        circleCode: result.circleCode || '',
+        circleName: result.circleName || '',
+      });
+
+      // Auto-select the detected operator
       setSelectedOp(result.operatorCode);
-      setDetectedCircle(result.circleName || '');
+      setSelectedCircleCode(result.circleCode || '');
       setMobileNumber(mobile);
 
       // Store KWIKAPI data in context for plans fetching
@@ -115,6 +147,44 @@ export default function RechargePage() {
     }
   };
 
+  const handleManualOperatorSelect = (operatorCode: string) => {
+    setSelectedOp(operatorCode);
+
+    // Get operator from static mapping
+    const operatorInfo = getOperatorByCode(operatorCode);
+
+    // If user manually selects different operator from detected one
+    if (detectedOperator && operatorCode !== detectedOperator.code) {
+      // Use static mapping for KWIKAPI operator ID
+      logger.log('🔄 User manually selected different operator, using static mapping');
+      if (operatorInfo?.kwikApiOperatorId) {
+        setOperatorId(operatorInfo.kwikApiOperatorId);
+        logger.log(`✅ Set operatorId from mapping: ${operatorInfo.kwikApiOperatorId}`);
+      } else {
+        setOperatorId(null);
+        logger.warn(`⚠️ No KWIKAPI ID mapping found for ${operatorCode}`);
+      }
+      // Keep the selected circle or clear if needed
+      // User will need to select circle manually
+    } else if (detectedOperator && operatorCode === detectedOperator.code) {
+      // User selected the detected operator, restore KWIKAPI data from detection
+      logger.log('✅ User selected detected operator, restoring KWIKAPI data');
+      setOperatorId(detectedOperator.operatorId);
+      setCircleCode(detectedOperator.circleCode);
+      setCircleName(detectedOperator.circleName);
+      setSelectedCircleCode(detectedOperator.circleCode);
+    }
+  };
+
+  const handleCircleSelect = (circleCode: string) => {
+    setSelectedCircleCode(circleCode);
+    const circle = circles.find(c => c.circleCode === circleCode);
+    if (circle) {
+      setCircleCode(circleCode);
+      setCircleName(circle.circleName);
+    }
+  };
+
   const handleBrowsePlans = () => {
     if (!selectedOp) {
       setError('Please select an operator first');
@@ -126,16 +196,63 @@ export default function RechargePage() {
       return;
     }
 
-    // Store mobile number for plans page
+    if (!selectedCircleCode) {
+      setError('Please select a circle first');
+      return;
+    }
+
+    // Get operator info from mapping
+    const operatorInfo = getOperatorByCode(selectedOp);
+
+    // Determine effective operatorId (from detection or from static mapping)
+    let effectiveOperatorId = sessionStorage.getItem('recharge_operatorId');
+
+    // If user manually selected different operator, use static mapping
+    if (detectedOperator && selectedOp !== detectedOperator.code) {
+      effectiveOperatorId = operatorInfo?.kwikApiOperatorId || null;
+      logger.log('📝 Using static mapping for manually selected operator:', {
+        operator: selectedOp,
+        operatorId: effectiveOperatorId,
+      });
+    }
+
+    const effectiveCircleCode = selectedCircleCode;
+
+    if (!effectiveOperatorId || !effectiveCircleCode) {
+      setError('⚠️ Missing operator or circle information. Please ensure operator and circle are selected.');
+      return;
+    }
+
+    // Store all data in sessionStorage for plans page
     if (typeof window !== 'undefined') {
       sessionStorage.setItem('recharge_mobile_number', mobile);
-      logger.log('💾 Stored mobile number for plans:', mobile);
+      sessionStorage.setItem('recharge_operatorId', effectiveOperatorId);
+      sessionStorage.setItem('recharge_circleCode', effectiveCircleCode);
+      sessionStorage.setItem('recharge_operatorCode', selectedOp);
+      sessionStorage.setItem('recharge_operatorName', operatorInfo?.name || selectedOp);
+
+      const circleName = circles.find(c => c.circleCode === effectiveCircleCode)?.circleName || effectiveCircleCode;
+      sessionStorage.setItem('recharge_circleName', circleName);
+
+      logger.log('💾 Stored complete recharge data:', {
+        mobile,
+        operatorId: effectiveOperatorId,
+        circleCode: effectiveCircleCode,
+        operatorCode: selectedOp,
+      });
     }
 
     // Set context
     setMobileNumber(mobile);
+    setOperatorId(effectiveOperatorId);
+    setCircleCode(effectiveCircleCode);
 
     // Navigate to plans
+    logger.log('✅ Navigating to plans with data:', {
+      selectedOp,
+      operatorId: effectiveOperatorId,
+      circleCode: effectiveCircleCode,
+    });
     router.push(ROUTES.RECHARGE_PLANS);
   };
 
@@ -242,6 +359,24 @@ export default function RechargePage() {
                 Detect
               </Button>
             </div>
+
+            {/* Show detected operator info below mobile field */}
+            {detectedOperator && (
+              <div className="mt-3 p-3 bg-green-500/10 border border-green-500/30 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <svg className="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <div className="text-sm">
+                    <span className="text-green-400 font-medium">Detected:</span>{' '}
+                    <span className="text-white">{detectedOperator.name}</span>
+                    {detectedOperator.circleName && (
+                      <span className="text-gray-400"> • {detectedOperator.circleName}</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Operator Selection */}
@@ -253,7 +388,7 @@ export default function RechargePage() {
               {operators.map((operator) => (
                 <button
                   key={operator.code}
-                  onClick={() => setSelectedOp(operator.code)}
+                  onClick={() => handleManualOperatorSelect(operator.code)}
                   className={`
                     p-4 rounded-lg border-2 transition-all
                     ${selectedOp === operator.code
@@ -269,16 +404,39 @@ export default function RechargePage() {
                 </button>
               ))}
             </div>
-
-            {/* Show detected circle */}
-            {detectedCircle && (
-              <div className="mt-3 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
-                <div className="text-sm text-blue-400">
-                  <span className="font-medium">Circle:</span> {detectedCircle}
-                </div>
-              </div>
-            )}
           </div>
+
+          {/* Circle Selection - Show when operator is selected */}
+          {selectedOp && (
+            <div>
+              <label className="block text-gray-900 font-medium mb-2">
+                Select Circle {selectedCircleCode && <span className="text-gray-600 text-sm">(Current: {circles.find(c => c.circleCode === selectedCircleCode)?.circleName || selectedCircleCode})</span>}
+              </label>
+              <select
+                value={selectedCircleCode}
+                onChange={(e) => handleCircleSelect(e.target.value)}
+                className="w-full p-3 rounded-lg bg-white border border-gray-300 text-gray-900 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                disabled={loadingCircles}
+              >
+                <option value="" className="text-gray-500">Select a circle...</option>
+                {circles.map((circle) => (
+                  <option key={circle.circleCode} value={circle.circleCode} className="text-gray-900">
+                    {circle.circleName}
+                  </option>
+                ))}
+              </select>
+              {selectedOp && detectedOperator && selectedOp !== detectedOperator.code && (
+                <div className="mt-2 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                  <div className="text-sm text-blue-400">
+                    ℹ️ <strong>Note:</strong> You manually corrected the operator.
+                  </div>
+                  <div className="text-xs text-blue-400/80 mt-1">
+                    Browse Plans will use <strong>{getOperatorByCode(selectedOp)?.name || selectedOp}</strong> with your selected circle. Make sure both are correct before proceeding.
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Amount Input */}
           <div>

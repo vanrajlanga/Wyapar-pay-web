@@ -57,7 +57,11 @@ export const API_ENDPOINTS = {
   RECHARGE: {
     DETECT_OPERATOR: '/recharge/detect-operator',
     GET_OPERATORS: '/recharge/operators',
+    GET_ALL_OPERATORS: '/recharge/all-operators',
+    FETCH_AND_STORE_OPERATORS: '/recharge/fetch-operators',
     GET_CIRCLES: (operatorCode: string) => `/recharge/circles/${operatorCode}`,
+    GET_ALL_CIRCLES: '/recharge/all-circles',
+    FETCH_AND_STORE_CIRCLES: '/recharge/fetch-circles',
     GET_PLANS: '/recharge/plans',
     VALIDATE: '/recharge/validate',
     PROCESS_MOBILE: '/recharge/mobile',

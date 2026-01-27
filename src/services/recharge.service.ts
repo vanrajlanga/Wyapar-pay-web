@@ -58,6 +58,60 @@ class RechargeService {
   }
 
   /**
+   * Get all circles from database (cached from KWIKAPI)
+   */
+  async getAllCircles(): Promise<Array<{ circleCode: string; circleName: string }>> {
+    return apiService.get<Array<{ circleCode: string; circleName: string }>>(
+      API_ENDPOINTS.RECHARGE.GET_ALL_CIRCLES
+    );
+  }
+
+  /**
+   * Fetch and store circles from KWIKAPI (Admin only - rate limited to 2 hits/day)
+   */
+  async fetchAndStoreCircles(): Promise<{
+    success: boolean;
+    circlesStored: number;
+    message: string;
+  }> {
+    return apiService.post<{
+      success: boolean;
+      circlesStored: number;
+      message: string;
+    }>(API_ENDPOINTS.RECHARGE.FETCH_AND_STORE_CIRCLES, {});
+  }
+
+  /**
+   * Get all operators from database (cached from KWIKAPI)
+   * Returns operators with KWIKAPI operator IDs
+   */
+  async getAllOperatorsFromDB(): Promise<Array<{
+    operatorId: string;
+    operatorName: string;
+    serviceType: string;
+    status: string;
+    amountMinimum: number;
+    amountMaximum: number;
+  }>> {
+    return apiService.get(API_ENDPOINTS.RECHARGE.GET_ALL_OPERATORS);
+  }
+
+  /**
+   * Fetch and store operators from KWIKAPI (Admin only - rate limited to 15 hits/day)
+   */
+  async fetchAndStoreOperators(): Promise<{
+    success: boolean;
+    operatorsStored: number;
+    message: string;
+  }> {
+    return apiService.post<{
+      success: boolean;
+      operatorsStored: number;
+      message: string;
+    }>(API_ENDPOINTS.RECHARGE.FETCH_AND_STORE_OPERATORS, {});
+  }
+
+  /**
    * Get recharge plans from KWIKAPI
    */
   async getPlans(params: {
