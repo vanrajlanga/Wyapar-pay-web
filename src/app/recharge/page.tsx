@@ -280,7 +280,7 @@ export default function RechargePage() {
     // Store all recharge data in sessionStorage for checkout page
     const operatorId = sessionStorage.getItem('recharge_operatorId');
     const operatorName = sessionStorage.getItem('recharge_operatorName') || operator?.name || 'Unknown';
-    const circleName = sessionStorage.getItem('recharge_circleName') || detectedCircle || 'India';
+    const circleName = sessionStorage.getItem('recharge_circleName') || detectedOperator?.circleName || 'India';
 
     if (typeof window !== 'undefined') {
       sessionStorage.setItem('recharge_mobile_number', mobile);
