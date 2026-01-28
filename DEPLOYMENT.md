@@ -10,12 +10,12 @@ This guide explains how to deploy updates with just `git pull`, `npm run build`,
 
 ### Step 1: Configure Plesk Node.js Settings
 
-**IMPORTANT:** Use `.next/standalone` as your document root!
+**IMPORTANT:** Use project root as your document root!
 
 ```
 Node.js Version:         23.11.1 (or 20.x)
 Package Manager:         npm
-Document Root:           /wyaparpay.kabootz.in/.next/standalone  ← IMPORTANT!
+Document Root:           /wyaparpay.kabootz.in  ← IMPORTANT!
 Application Root:        /wyaparpay.kabootz.in
 Application Startup:     .next/standalone/server.js
 Application Mode:        production
@@ -110,26 +110,32 @@ When you run `npm run build`:
 After build, your server should look like this:
 
 ```
-/wyaparpay.kabootz.in/
+/wyaparpay.kabootz.in/           ← Document Root (web server serves from here)
+├── _next/
+│   └── static/                  ← Static assets (auto-copied by postbuild)
+│       ├── chunks/              ← JS files
+│       ├── css/                 ← CSS files
+│       └── media/               ← Fonts
 ├── .next/
-│   └── standalone/              ← Document Root points here
+│   └── standalone/
 │       ├── .next/
-│       │   └── static/          ← Static assets (auto-copied)
-│       │       ├── chunks/      ← JS files
-│       │       ├── css/         ← CSS files
-│       │       └── media/       ← Fonts
+│       │   └── static/          ← Also copied here
 │       ├── node_modules/        ← Dependencies
-│       ├── public/              ← Public assets (auto-copied)
-│       │   ├── logo.png
-│       │   ├── manifest.json
-│       │   └── ...
+│       ├── public/              ← Also copied here
 │       ├── server.js            ← Startup file
 │       └── package.json
 ├── src/                         ← Source code
 ├── public/                      ← Source public files
+├── logo.png                     ← Public files (auto-copied by postbuild)
+├── manifest.json                ← Public files (auto-copied by postbuild)
+├── favicon.ico                  ← Public files (auto-copied by postbuild)
 ├── package.json
 └── ...
 ```
+
+**Key Point:** The postbuild script copies static files to BOTH locations:
+- `.next/standalone/` (for self-contained deployment)
+- Project root (for web server access when Document Root = /wyaparpay.kabootz.in)
 
 ---
 
@@ -148,11 +154,14 @@ After deployment, verify:
 
 ### Issue: 404 errors for static files
 
-**Solution:** Check Document Root is set to `.next/standalone`:
+**Solution:** Check Document Root is set to project root:
 ```
-Document Root: /wyaparpay.kabootz.in/.next/standalone  ✅
-NOT: /wyaparpay.kabootz.in  ❌
+Document Root: /wyaparpay.kabootz.in  ✅
+NOT: /wyaparpay.kabootz.in/.next/standalone  ❌
 ```
+
+The postbuild script copies all static files to the project root,
+so the web server can serve them when Document Root is the parent directory.
 
 ### Issue: Files not updating after build
 
