@@ -141,6 +141,7 @@ export interface RechargePlan {
   data?: string;
   voice?: string;
   sms?: string;
+  benefits?: string[];
   category: 'topup' | 'data' | 'unlimited' | 'roaming' | 'special';
   popular?: boolean;
 }

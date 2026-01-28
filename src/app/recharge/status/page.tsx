@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/landing/Footer';
@@ -15,7 +15,7 @@ import {
   RefreshCw,
 } from 'lucide-react';
 
-export default function RechargeStatusPage() {
+function StatusContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const status = searchParams.get('status'); // success | failed | pending
@@ -299,5 +299,20 @@ export default function RechargeStatusPage() {
       </main>
       <Footer />
     </div>
+  );
+}
+
+export default function RechargeStatusPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <RefreshCw className="h-8 w-8 animate-spin text-orange-600 mx-auto mb-4" />
+          <p className="text-gray-600">Loading status...</p>
+        </div>
+      </div>
+    }>
+      <StatusContent />
+    </Suspense>
   );
 }
