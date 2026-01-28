@@ -83,14 +83,14 @@ export default function RechargePage() {
     setError('');
     setSuccessMessage('');
     try {
-      logger.log('🔍 Starting operator detection for:', mobile);
+      logger.info('🔍 Starting operator detection for:', mobile);
 
       const result = await rechargeService.detectOperator({
         mobileNumber: mobile,
       });
 
-      logger.log('✅ Detection Response:', result);
-      logger.log('📋 Extracted values:', {
+      logger.info('✅ Detection Response:', result);
+      logger.info('📋 Extracted values:', {
         operatorId: result.operatorId,
         circleCode: result.circleCode,
         circleName: result.circleName,
@@ -111,7 +111,7 @@ export default function RechargePage() {
       setMobileNumber(mobile);
 
       // Store KWIKAPI data in context for plans fetching
-      logger.log('💾 Storing in context...');
+      logger.info('💾 Storing in context...');
       setOperatorId(result.operatorId || null);
       setCircleCode(result.circleCode || null);
       setCircleName(result.circleName || null);
@@ -123,10 +123,10 @@ export default function RechargePage() {
         sessionStorage.setItem('recharge_circleName', result.circleName || '');
         sessionStorage.setItem('recharge_operatorCode', result.operatorCode || '');
         sessionStorage.setItem('recharge_operatorName', result.operatorName || '');
-        logger.log('💾 Also stored in sessionStorage for persistence');
+        logger.info('💾 Also stored in sessionStorage for persistence');
       }
 
-      logger.log('✅ Stored in context:', {
+      logger.info('✅ Stored in context:', {
         operatorId: result.operatorId,
         circleCode: result.circleCode,
         circleName: result.circleName,
@@ -138,7 +138,7 @@ export default function RechargePage() {
         : `Detected: ${result.operatorName}`;
       setSuccessMessage(message);
 
-      logger.log('✅ Operator detected successfully');
+      logger.info('✅ Operator detected successfully');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to detect operator');
       logger.error('❌ Operator detection failed:', err);
@@ -156,10 +156,10 @@ export default function RechargePage() {
     // If user manually selects different operator from detected one
     if (detectedOperator && operatorCode !== detectedOperator.code) {
       // Use static mapping for KWIKAPI operator ID
-      logger.log('🔄 User manually selected different operator, using static mapping');
+      logger.info('🔄 User manually selected different operator, using static mapping');
       if (operatorInfo?.kwikApiOperatorId) {
         setOperatorId(operatorInfo.kwikApiOperatorId);
-        logger.log(`✅ Set operatorId from mapping: ${operatorInfo.kwikApiOperatorId}`);
+        logger.info(`✅ Set operatorId from mapping: ${operatorInfo.kwikApiOperatorId}`);
       } else {
         setOperatorId(null);
         logger.warn(`⚠️ No KWIKAPI ID mapping found for ${operatorCode}`);
@@ -168,7 +168,7 @@ export default function RechargePage() {
       // User will need to select circle manually
     } else if (detectedOperator && operatorCode === detectedOperator.code) {
       // User selected the detected operator, restore KWIKAPI data from detection
-      logger.log('✅ User selected detected operator, restoring KWIKAPI data');
+      logger.info('✅ User selected detected operator, restoring KWIKAPI data');
       setOperatorId(detectedOperator.operatorId);
       setCircleCode(detectedOperator.circleCode);
       setCircleName(detectedOperator.circleName);
@@ -210,7 +210,7 @@ export default function RechargePage() {
     // If user manually selected different operator, use static mapping
     if (detectedOperator && selectedOp !== detectedOperator.code) {
       effectiveOperatorId = operatorInfo?.kwikApiOperatorId || null;
-      logger.log('📝 Using static mapping for manually selected operator:', {
+      logger.info('📝 Using static mapping for manually selected operator:', {
         operator: selectedOp,
         operatorId: effectiveOperatorId,
       });
@@ -234,7 +234,7 @@ export default function RechargePage() {
       const circleName = circles.find(c => c.circleCode === effectiveCircleCode)?.circleName || effectiveCircleCode;
       sessionStorage.setItem('recharge_circleName', circleName);
 
-      logger.log('💾 Stored complete recharge data:', {
+      logger.info('💾 Stored complete recharge data:', {
         mobile,
         operatorId: effectiveOperatorId,
         circleCode: effectiveCircleCode,
@@ -248,7 +248,7 @@ export default function RechargePage() {
     setCircleCode(effectiveCircleCode);
 
     // Navigate to plans
-    logger.log('✅ Navigating to plans with data:', {
+    logger.info('✅ Navigating to plans with data:', {
       selectedOp,
       operatorId: effectiveOperatorId,
       circleCode: effectiveCircleCode,
@@ -288,7 +288,7 @@ export default function RechargePage() {
       sessionStorage.setItem('recharge_operator', operatorName);
       sessionStorage.setItem('recharge_operator_id', operatorId || '');
       sessionStorage.setItem('recharge_circle_name', circleName);
-      logger.log('💾 Stored recharge details for checkout:', {
+      logger.info('💾 Stored recharge details for checkout:', {
         mobile,
         amount: rechargeAmount,
         operator: operatorName,

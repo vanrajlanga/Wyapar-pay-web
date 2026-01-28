@@ -38,7 +38,7 @@ export default function RechargePlansPage() {
 
   // Initialize from context or sessionStorage on mount
   useEffect(() => {
-    logger.log('🔍 Plans Page - Context Values:', {
+    logger.info('🔍 Plans Page - Context Values:', {
       mobileNumber,
       selectedOperator: selectedOperator?.code,
       operatorId,
@@ -48,13 +48,13 @@ export default function RechargePlansPage() {
 
     // If context values are missing, try sessionStorage
     if (!operatorId || !circleCode) {
-      logger.log('⚠️ Context values missing, checking sessionStorage...');
+      logger.info('⚠️ Context values missing, checking sessionStorage...');
       const storedOperatorId = sessionStorage.getItem('recharge_operatorId');
       const storedCircleCode = sessionStorage.getItem('recharge_circleCode');
       const storedCircleName = sessionStorage.getItem('recharge_circleName');
       const storedOperatorCode = sessionStorage.getItem('recharge_operatorCode');
 
-      logger.log('📦 SessionStorage values:', {
+      logger.info('📦 SessionStorage values:', {
         storedOperatorId,
         storedCircleCode,
         storedCircleName,
@@ -62,7 +62,7 @@ export default function RechargePlansPage() {
       });
 
       if (storedOperatorId && storedCircleCode) {
-        logger.log('✅ Restored from sessionStorage');
+        logger.info('✅ Restored from sessionStorage');
         setLocalOperatorId(storedOperatorId);
         setLocalCircleCode(storedCircleCode);
 
@@ -132,7 +132,7 @@ export default function RechargePlansPage() {
           code: storedOperatorCode,
           name: storedOperatorName || storedOperatorCode,
         } as RechargeOperator;
-        logger.log('📦 Using operator from sessionStorage:', effectiveOperator);
+        logger.info('📦 Using operator from sessionStorage:', effectiveOperator);
       }
     }
 
@@ -151,7 +151,7 @@ export default function RechargePlansPage() {
     setError('');
 
     try {
-      logger.log('🔍 Fetching plans with KWIKAPI data:', {
+      logger.info('🔍 Fetching plans with KWIKAPI data:', {
         operator: effectiveOperator.code,
         operatorName: effectiveOperator.name,
         operatorId: effectiveOperatorId,
@@ -167,7 +167,7 @@ export default function RechargePlansPage() {
       });
 
       setPlans(fetchedPlans);
-      logger.log(`✅ Fetched ${fetchedPlans.length} plans from KWIKAPI`);
+      logger.info(`✅ Fetched ${fetchedPlans.length} plans from KWIKAPI`);
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Failed to fetch plans';
       setError(errorMsg);
@@ -178,7 +178,7 @@ export default function RechargePlansPage() {
   };
 
   const handleSelectPlan = (plan: RechargePlan) => {
-    logger.log('📋 Plan selected:', plan);
+    logger.info('📋 Plan selected:', plan);
 
     // Set context
     setSelectedPlan(plan);
@@ -199,7 +199,7 @@ export default function RechargePlansPage() {
       sessionStorage.setItem('recharge_operator_id', effectiveOperatorId || '');
       sessionStorage.setItem('recharge_circle_name', effectiveCircleName);
 
-      logger.log('💾 Stored plan details for checkout:', {
+      logger.info('💾 Stored plan details for checkout:', {
         mobile: effectiveMobileNumber,
         amount: plan.amount,
         operator: effectiveOperatorName,
