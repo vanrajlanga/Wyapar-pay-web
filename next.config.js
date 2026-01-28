@@ -51,7 +51,10 @@ const nextConfig = {
     // your project has type errors. Only use this if you understand the risks.
     ignoreBuildErrors: false, // Keep this false to catch type errors
   },
-  
+
+  // Disable font optimization in development to avoid Google Fonts timeout
+  optimizeFonts: process.env.NODE_ENV === 'production',
+
   // Development optimizations for hot reloading
   ...(process.env.NODE_ENV === 'development' && {
     webpack: (config, { dev, isServer }) => {

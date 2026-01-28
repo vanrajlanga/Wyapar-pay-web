@@ -10,11 +10,13 @@
     "dev": "npm run clean && next dev -p 3001",
     "dev:fast": "next dev -p 3001",
     "clean": "rm -rf .next",
-    "build": "next build",
+    "build": "next build && npm run postbuild",
+    "postbuild": "node scripts/postbuild.js",
     "start": "next start",
     "start:local": "next start -p 3001",
     "lint": "next lint",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "deploy": "npm run build && echo 'Build complete! Restart your Node.js app in Plesk.'"
   },
   "dependencies": {
     "clsx": "^2.1.1",
