@@ -15,7 +15,10 @@ const withPWA = require('next-pwa')({
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
-  
+
+  // Output standalone server for easier deployment
+  output: 'standalone',
+
   // Output configuration for AWS Amplify
   // Amplify auto-detects Next.js and handles SSR/SSG
   // IMPORTANT: Do NOT use output: 'export' - it disables SSR and API routes
