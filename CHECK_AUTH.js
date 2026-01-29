@@ -60,7 +60,7 @@ if (userData) {
 console.log('\n3. Test API Request:');
 if (token) {
   const parsedToken = JSON.parse(token);
-  fetch('http://localhost:3000/api/v1/payment/create-order', {
+  fetch('https://apiwyaparpay.kabootz.in/api/v1/payment/create-order', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
